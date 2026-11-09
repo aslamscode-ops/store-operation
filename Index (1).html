@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <title>Store Operations Map</title>
+    <link rel="icon" href="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/flipkart-icon.png">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+      :root { --primary-blue:#0056d2; --border-slate:#cbd5e1; --bg-slate:#f8fafc; --text-slate:#1e293b; --text-gray:#94a3b8; --hover-blue:#eff6ff; --card-bg:#ffffff; --status-live:#006400; --status-disrupted:#d97706; --status-progress:#2563eb; --status-close:#dc2626; --status-upcoming:#9333ea; --status-unknown:#64748b; }
+      body.dark-mode { --primary-blue:#3b82f6; --border-slate:#334155; --bg-slate:#0f172a; --text-slate:#f1f5f9; --text-gray:#94a3b8; --hover-blue:#1e293b; --card-bg:#1e293b; }
+      body.dark-mode .dd-trigger, body.dark-mode .dd-menu { background: var(--card-bg); color: #fff; }
+      body.dark-mode .dd-item:hover { background: #334155; }
+      body.dark-mode .modal-content { background: #1e293b; color: #fff; }
+      body.dark-mode textarea, body.dark-mode input, body.dark-mode select { background: #334155; color: #fff; border-color: #475569; }
+      * { box-sizing: border-box; }
+      body, html { font-family: 'Lexend', sans-serif; margin: 0; padding: 0; background-color: var(--bg-slate); color: var(--text-slate); height: 100%; width: 100%; overflow: hidden; }
+      #app-container { display: flex; height: 100vh; flex-direction: column; width: 100%; position: relative; }
+      header { background: linear-gradient(90deg, #003b99, #0056d2); border-bottom: 1px solid rgba(255,255,255,.1); padding: 0 20px; height: 64px; display: flex; align-items: center; justify-content: space-between; z-index: 4000; box-shadow: 0 2px 10px rgba(0,0,0,.25); position: relative; flex-shrink: 0; }
+      .logo-container { display: flex; align-items: center; gap: 12px; z-index: 20; color: #fff; font-weight: 700; font-size: 1.1rem; }
+      .menu-btn { background: 0 0; border: none; color: #fff; font-size: 1.2rem; cursor: pointer; margin-right: 10px; }
+      .view-switcher { position: absolute; left: 50%; transform: translateX(-50%); display: flex; background: rgba(0,0,0,.25); padding: 4px; border-radius: 8px; z-index: 10; }
+      .view-btn { background: 0 0; border: none; color: rgba(255,255,255,.8); padding: 6px 16px; font-size: .85rem; font-weight: 600; cursor: pointer; border-radius: 6px; transition: .2s; font-family: 'Lexend', sans-serif; }
+      .view-btn.active { background: #fff; color: var(--primary-blue); box-shadow: 0 2px 4px rgba(0,0,0,.15); }
+      .control-section { margin-bottom: 15px; position: relative; }
+      .dd-wrapper { position: relative; width: 100%; }
+      .dd-wrapper.active { z-index: 10000; } 
+      .dd-trigger { width: 100%; background: var(--card-bg); border: 1px solid var(--border-slate); border-radius: 8px; padding: 12px 16px; height: 52px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; color: var(--text-slate); position: relative; z-index: 10; }
+      .dd-label { position: absolute; top: -8px; left: 12px; background: var(--card-bg); padding: 0 5px; font-size: 10px; font-weight: 700; color: var(--text-gray); z-index: 11; }
+      .dd-text { font-size: .9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 230px; }
+      .dd-menu { position: absolute; top: 105%; left: 0; width: 100%; background: var(--card-bg); border: 1px solid var(--border-slate); border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; z-index: 10001; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+      .dd-wrapper.active .dd-menu { display: block; }
+      .dd-search-container { position: sticky; top: 0; background: var(--card-bg); padding: 10px; border-bottom: 1px solid var(--border-slate); z-index: 100000; }
+      .dd-search-input { width: 100%; padding: 10px; border: 1px solid var(--border-slate); border-radius: 4px; font-size: .9rem; background: var(--bg-slate); color: var(--text-slate); font-family: 'Lexend', sans-serif; }
+      .dd-item { padding: 12px 14px; border-bottom: 1px solid var(--border-slate); display: flex; align-items: center; cursor: pointer; color: var(--text-slate); font-size: 0.9rem; }
+      .dd-item:hover { background-color: var(--hover-blue); }
+      .dd-checkbox { width: 18px; height: 18px; border: 2px solid var(--border-slate); border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
+      .dd-item.selected .dd-checkbox { background: var(--primary-blue); border-color: var(--primary-blue); }
+      .dd-item.selected .dd-checkbox i { color: #fff; font-size: 10px; display: block; }
+      .dd-checkbox i { display: none; }
+      .main-container { display: flex; flex: 1; min-height: 0; position: relative; }
+      .sidebar { width: 380px; background: var(--card-bg); border-right: 1px solid var(--border-slate); padding: 20px; display: flex; flex-direction: column; z-index: 3000; height: 100%; }
+      .map-wrapper { flex: 1; background: #e5e7eb; position: relative; z-index: 1; }
+      #map { height: 100%; width: 100%; }
+      #polygon-controls, #heatmap-controls { display: flex; flex-direction: column; height: 100%; flex: 1; min-height: 0; }
+      #statusContainer { flex: 1; overflow-y: auto; margin-top: 10px; padding-right: 5px; padding-bottom: 20px; min-height: 0; }
+      #statusContainer::-webkit-scrollbar, .dd-menu::-webkit-scrollbar { width: 6px; }
+      #statusContainer::-webkit-scrollbar-track, .dd-menu::-webkit-scrollbar-track { background: transparent; }
+      #statusContainer::-webkit-scrollbar-thumb, .dd-menu::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+      .clear-btn-ext { width: 40px; height: 52px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; display: none; align-items: center; justify-content: center; cursor: pointer; margin-left: 5px; }
+      .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 4500; display: none; }
+      .side-menu { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: var(--card-bg); z-index: 4600; transition: left .3s; padding-top: 20px; box-shadow: 4px 0 15px rgba(0,0,0,.1); overflow-y: auto; }
+      .side-menu.open { left: 0; }
+      .menu-item { padding: 12px 20px; display: flex; align-items: center; gap: 15px; color: var(--text-slate); cursor: pointer; font-weight: 500; font-size: 0.95rem; }
+      .menu-item:hover { background: var(--hover-blue); }
+      .menu-item i { width: 24px; text-align: center; color: var(--text-gray); } 
+      .menu-divider { height: 1px; background: var(--border-slate); margin: 8px 0; }
+      .status-card { padding: 12px; border: 1px solid var(--border-slate); border-radius: 8px; margin-bottom: 10px; background: var(--card-bg); border-left: 5px solid #ccc; }
+      .bg-live { border-left-color: var(--status-live); } .bg-disrupted { border-left-color: var(--status-disrupted); }
+      .bg-progress { border-left-color: var(--status-progress); } .bg-close { border-left-color: var(--status-close); }
+      .bg-upcoming { border-left-color: var(--status-upcoming); } .bg-unknown { border-left-color: var(--status-unknown); }
+      .store-name { font-weight: 700; font-size: 0.95rem; display: block; margin-bottom: 5px; }
+      .time-row { font-size: 0.8rem; color: var(--text-gray); display: flex; justify-content: space-between; }
+      .map-link-btn { margin-top: 8px; flex: 1; background: var(--bg-slate); border: 1px solid var(--border-slate); padding: 6px; border-radius: 4px; color: var(--primary-blue); font-weight: 600; font-size: 0.8rem; cursor: pointer; font-family: 'Lexend', sans-serif; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+      .map-link-btn:hover { background: var(--hover-blue); }
+      .legend-container { padding: 10px; background: var(--bg-slate); border-radius: 6px; border: 1px solid var(--border-slate); margin-bottom: 10px; flex-shrink: 0; }
+      .legend-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 5px; }
+      .legend-item { font-size: 0.75rem; display: flex; align-items: center; }
+      .legend-box { width: 12px; height: 12px; margin-right: 5px; border-radius: 2px; }
+      .hm-stat-box { padding: 15px; border-radius: 8px; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+      .hm-delivered { background: linear-gradient(135deg,#006400,#166534); } .hm-attempted { background: linear-gradient(135deg,#dc2626,#991b1b); }
+      .hm-stat-val { font-size: 1.5rem; font-weight: 700; }
+      #rider-metrics-box { background: var(--hover-blue); border: 1px solid var(--primary-blue); border-radius: 8px; padding: 12px; margin-bottom: 15px; color: var(--primary-blue); font-size: 0.85rem; font-weight: 600; display: none; flex-direction: column; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+      .rm-row { display: flex; justify-content: space-between; align-items: center; }
+      .store-icon-marker { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 2px solid #333; box-shadow: 0 3px 6px rgba(0,0,0,0.3); color: #333; font-size: 16px; }
+      .hidden { display: none !important; }
+      .toggle-switch { position: relative; display: inline-block; width: 34px; height: 20px; margin-left: auto; }
+      .toggle-switch input { opacity: 0; width: 0; height: 0; }
+      .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+      .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+      input:checked + .slider { background-color: var(--primary-blue); }
+      input:checked + .slider:before { transform: translateX(14px); }
+      .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 5000; display: none; align-items: center; justify-content: center; flex-direction: column; overflow-y:auto; padding: 20px;}
+      .modal-content { background: var(--card-bg); padding: 25px; border-radius: 12px; width: 95%; max-width: 650px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+      .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.2rem; color: var(--text-gray); }
+      .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+      .stat-item { background: var(--bg-slate); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-slate); }
+      .stat-num { font-size: 1.5rem; font-weight: 700; color: var(--primary-blue); }
+      .stat-lbl { font-size: 0.8rem; color: var(--text-gray); }
+      .chart-container { width: 100%; height: 200px; margin-top: 15px; background: var(--bg-slate); border: 1px solid var(--border-slate); border-radius: 8px; padding: 10px; }
+      .custom-anomaly-icon { display:flex; align-items:center; justify-content:center; }
+      .anomaly-pulse { width: 45px; height: 45px; background: rgba(220, 38, 38, 0.35); border: 2px solid #dc2626; border-radius: 50%; animation: pulse-red 1.2s infinite ease-out; pointer-events: none; }
+      @keyframes pulse-red { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+      .measure-mode, .area-count-mode, .draw-mode { cursor: crosshair !important; }
+      .report-textarea { width: 100%; height: 100px; margin-top: 10px; padding: 10px; border-radius: 6px; border: 1px solid var(--border-slate); font-family: 'Lexend', sans-serif; resize: none; }
+      .report-btn { width: 100%; background: var(--primary-blue); color: #fff; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: 0.2s; font-family:'Lexend', sans-serif; }
+      .report-btn:hover { opacity: 0.9; }
+      .app-footer { position: relative; background: linear-gradient(90deg, #003b99, #0056d2); color: #ffffff !important; padding: 5px 20px; font-family: 'Lexend', sans-serif; font-style: italic; font-weight: 700; font-size: 0.85rem; z-index: 4000; text-align: right; box-shadow: 0 -2px 10px rgba(0,0,0,0.25); flex-shrink: 0; }
+      .loader-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255,255,255,0.95); z-index: 100000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+      body.dark-mode .loader-overlay { background: rgba(15, 23, 42, 0.95); }
+      .loader-box { background: var(--card-bg); padding: 40px; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 320px; width: 350px; }
+      .loader-spinner { width: 55px; height: 55px; border: 5px solid #e2e8f0; border-top-color: var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 25px; }
+      .loader-text { font-size: 1.15rem; font-weight: 600; color: var(--text-slate); margin-top: 10px; }
+      .loader-icon-success { font-size: 60px; color: var(--status-live); display: none; margin-bottom: 15px; animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+      .guide-list { padding:0; list-style:none; font-size:0.9rem; color:var(--text-slate); line-height:1.8; margin-top:15px;}
+      .guide-list li { margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; }
+      .guide-list i { font-size: 1.1rem; margin-top: 3px; width: 20px; text-align: center; }
+      .upload-btn { background: #FFEA00; color: #000; padding: 8px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Lexend', sans-serif; }
+      .upload-btn:hover { background: #ffcc00; transform: translateY(-1px); }
+      .btn-danger { background: #ef4444 !important; color: #ffffff !important; }
+      .btn-danger:hover { background: #dc2626 !important; }
+      .header-actions { display: flex; gap: 12px; align-items: center; }
+      .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+      .form-grid label { font-size: 0.8rem; font-weight: 600; color: var(--text-gray); margin-bottom: 4px; display: block; }
+      #drawing-tools { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); background: var(--card-bg); padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 4000; display: none; align-items: center; gap: 15px; font-weight: bold; color: #dc2626; }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/@asymmetrik/leaflet-d3@5.0.1/dist/leaflet-d3.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  </head>
+  <body>
+    <div class="loader-overlay" id="mainLoader">
+       <div class="loader-box">
+          <div class="loader-spinner" id="loaderSpinner"></div>
+          <i class="fa-solid fa-circle-check loader-icon-success" id="loaderSuccessIcon"></i>
+          <div class="loader-text" id="loaderText">Loading Data...</div>
+       </div>
+    </div>
+
+    <div class="modal-overlay" id="analyticsModal">
+        <div class="modal-content" id="analytics-pdf-content">
+            <i class="fa-solid fa-times modal-close" onclick="$('#analyticsModal').fadeOut()" data-html2canvas-ignore="true"></i>
+            <h3 style="margin:0 0 5px 0"><i class="fa-solid fa-chart-pie"></i> Visual Dashboard</h3>
+            <p style="font-size:0.8rem;color:var(--text-gray)">Real-time Operations Overview</p>
+            <div class="stat-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+               <div class="stat-item" style="grid-column: span 3;"><div class="stat-num" id="an-total">0</div><div class="stat-lbl">Total Stores</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-live" style="color:var(--status-live)">0</div><div class="stat-lbl">Live</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-closed" style="color:var(--status-close)">0</div><div class="stat-lbl">Closed</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-disrupt" style="color:var(--status-disrupted)">0</div><div class="stat-lbl">Disrupted</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-progress" style="color:var(--status-progress)">0</div><div class="stat-lbl">In Process</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-upcoming" style="color:var(--status-upcoming)">0</div><div class="stat-lbl">Upcoming</div></div>
+               <div class="stat-item"><div class="stat-num" id="an-unknown" style="color:var(--status-unknown)">0</div><div class="stat-lbl">Unknown</div></div>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <div class="chart-container" style="flex: 1;"><canvas id="statusPieChart"></canvas></div>
+                <div class="chart-container" style="flex: 1;"><canvas id="orderBarChart"></canvas></div>
+            </div>
+            <button class="report-btn" onclick="downloadPDFReport()" data-html2canvas-ignore="true"><i class="fa-solid fa-file-pdf"></i> Download PDF Report</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="guideModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-times modal-close" onclick="$('#guideModal').fadeOut()"></i>
+            <h3 style="margin-top:0;">User Guide</h3>
+            <ul class="guide-list">
+               <li><i class="fa-solid fa-draw-polygon" style="color:#2563eb;"></i> <div><b>Polygon View:</b> Visualizes store delivery areas.</div></li>
+               <li><i class="fa-solid fa-fire" style="color:#dc2626;"></i> <div><b>Order Map & Thermal:</b> Heatmap of orders. Anomaly Detection highlights failed clusters!</div></li>
+               <li><i class="fa-solid fa-route" style="color:#9333ea;"></i> <div><b>Rider Trace & Metrics:</b> Select a rider to see their path, success rate, and total deliveries.</div></li>
+               <li><i class="fa-solid fa-calculator" style="color:#000;"></i> <div><b>ETA Calculator:</b> Click on any order dot in Order Map to see Distance and ETA from Store.</div></li>
+               <li><i class="fa-solid fa-search-location" style="color:#059669;"></i> <div><b>Search Address:</b> Type address, hit Enter. Press Esc or Bin icon to clear.</div></li>
+               <li><i class="fa-solid fa-pen-nib" style="color:#d97706;"></i> <div><b>Draw Geofence:</b> Create new store polygons smoothly.</div></li>
+               <li><i class="fa-solid fa-trash" style="color:#ef4444;"></i> <div><b>Delete Store:</b> Enter password (123123) to permanently remove a store.</div></li>
+               <li><i class="fa-solid fa-file-pdf" style="color:#ef4444;"></i> <div><b>PDF Reports:</b> Export beautiful charts and stats to PDF via Menu.</div></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content">
+            <i class="fa-solid fa-times modal-close" onclick="$('#reportModal').fadeOut()"></i>
+            <h3>Report Issue</h3>
+            <textarea id="reportText" class="report-textarea" placeholder="Type here..."></textarea>
+            <button class="report-btn" onclick="submitReport()">Submit Report</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addStoreModal">
+        <div class="modal-content" style="max-width: 550px;">
+            <i class="fa-solid fa-times modal-close" onclick="$('#addStoreModal').fadeOut()"></i>
+            <h3 style="margin:0 0 5px 0">Add / Save Store Details</h3>
+            <p style="font-size:0.8rem;color:var(--text-gray)">Store Shop Point is auto-calculated but you can edit it.</p>
+            <div class="form-grid">
+                <div><label>Cluster (Col A)</label><input type="text" id="add-cluster" class="dd-search-input" placeholder="e.g. North"></div>
+                <div><label>Store Name (Col B)</label><input type="text" id="add-store-name" class="dd-search-input" placeholder="e.g. FK_DEL_01"></div>
+                <div><label>Store ID (Col C)</label><input type="text" id="add-store-id" class="dd-search-input" placeholder="e.g. S1002"></div>
+                <div><label>Store Shop Point (Center)</label><input type="text" id="add-shop-coords" class="dd-search-input" placeholder="Lat, Lng"></div>
+                <div style="grid-column: 1 / span 2;"><label>Polygon Boundaries (Auto-Generated)</label><input type="text" id="add-poly-coords" class="dd-search-input" placeholder="Lng,Lat | Lng,Lat..."></div>
+                <div>
+                    <label>Store Status</label>
+                    <select id="add-store-status" class="dd-search-input">
+                        <option value="Live">Live</option><option value="Upcoming">Upcoming</option>
+                        <option value="Disrupted">Disrupted</option><option value="Closed">Closed</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+                <div></div>
+                <div><label>Start Timing (Col E)</label><input type="text" id="add-start-time" class="dd-search-input" value="6:00:00"></div>
+                <div><label>End Timing (Col F)</label><input type="text" id="add-end-time" class="dd-search-input" value="23:59:59"></div>
+            </div>
+            <button class="report-btn" id="btn-submit-store" onclick="submitNewStore()">Save Store Data</button>
+        </div>
+    </div>
+
+    <div id="drawing-tools">
+        <i class="fa-solid fa-pen-nib"></i> Drawing Store Area... Click points on map.
+        <button class="upload-btn" onclick="finishDrawStore()">Finish & Save</button>
+        <button class="upload-btn btn-danger" onclick="cancelDrawStore()">Cancel</button>
+    </div>
+
+    <div id="app-container">
+      <div class="menu-overlay" onclick="toggleMenu()"></div>
+      
+      <div class="side-menu" id="side-menu">
+         <div style="padding:0 20px;margin-bottom:15px"><h2 style="color:var(--primary-blue);margin:0">Menu</h2></div>
+         <div class="menu-item" onclick="reloadData()"><i class="fa-solid fa-rotate"></i> Refresh Data</div>
+         <div class="menu-item" onclick="showAnalytics()"><i class="fa-solid fa-chart-pie"></i> Visual Dashboard (PDF)</div>
+         <div class="menu-item" onclick="$('#addStoreModal').css('display','flex').hide().fadeIn(); toggleMenu()"><i class="fa-solid fa-store"></i> Add Store Details</div>
+         <div class="menu-item" onclick="startDrawStore()"><i class="fa-solid fa-pen-nib"></i> Draw New Store Area</div>
+         
+         <label class="menu-item" style="cursor:pointer;"><i class="fa-solid fa-draw-polygon"></i> <div style="flex:1">Update Polygon (CSV/JSON)</div>
+            <input type="file" accept=".csv, .json" style="display:none;" onchange="handlePolygonUpload(event)">
+         </label>
+         
+         <div class="menu-divider"></div>
+         <div class="menu-item"><i class="fa-solid fa-traffic-light"></i> <div style="flex:1">Live Traffic</div><label class="toggle-switch"><input type="checkbox" id="trafficToggle" onchange="toggleTraffic()"><span class="slider"></span></label></div>
+         <div class="menu-item"><i class="fa-solid fa-cloud-showers-heavy"></i> <div style="flex:1">Weather Radar</div><label class="toggle-switch"><input type="checkbox" id="weatherToggle" onchange="toggleWeather()"><span class="slider"></span></label></div>
+         <div class="menu-item"><i class="fa-solid fa-ruler-combined"></i> <div style="flex:1">Measure Distance</div><label class="toggle-switch"><input type="checkbox" id="measureToggle" onchange="toggleMeasure()"><span class="slider"></span></label></div>
+         <div class="menu-item"><i class="fa-solid fa-tower-broadcast"></i> <div style="flex:1">Anomaly Detection</div><label class="toggle-switch"><input type="checkbox" id="anomalyToggle" onchange="toggleAnomaly()"><span class="slider"></span></label></div>
+
+         <div class="menu-item" onclick="locateMe()"><i class="fa-solid fa-crosshairs"></i> Locate Me (GPS)</div>
+         <div class="menu-item" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i> Fullscreen Mode</div>
+         <div class="menu-divider"></div>
+         <div class="menu-item"><i class="fa-solid fa-satellite"></i> <div style="flex:1">Satellite View</div><label class="toggle-switch"><input type="checkbox" id="satToggle" onchange="toggleSatellite()"><span class="slider"></span></label></div>
+         <div class="menu-item"><i class="fa-solid fa-moon"></i> <div style="flex:1">Dark Mode</div><label class="toggle-switch"><input type="checkbox" id="darkToggle" onchange="toggleDarkMode()"><span class="slider"></span></label></div>
+         <div class="menu-item"><i class="fa-solid fa-clock-rotate-left"></i> <div style="flex:1">Silent Auto-Refresh</div><label class="toggle-switch"><input type="checkbox" id="autoRefToggle" onchange="toggleAutoRefresh()" checked><span class="slider"></span></label></div>
+         <div class="menu-divider"></div>
+         <div class="menu-item" onclick="$('#guideModal').css('display','flex').hide().fadeIn(); toggleMenu()"><i class="fa-solid fa-circle-question"></i> User Guide</div>
+      </div>
+
+      <header>
+        <div class="logo-container">
+          <button class="menu-btn" onclick="toggleMenu()"><i class="fa-solid fa-bars"></i></button>
+          <img src="https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/flipkart-icon.png" alt="Logo" style="height: 30px; margin-right: 10px;">
+          <span>Store Ops Map</span>
+        </div>
+        <div class="view-switcher">
+           <button class="view-btn active" id="btn-view-poly" onclick="switchView('polygon')">Polygon View</button>
+           <button class="view-btn" id="btn-view-heat" onclick="switchView('heatmap')">Order Map</button>
+        </div>
+        <div class="header-actions">
+            <button class="upload-btn btn-danger" onclick="triggerClearData()"><i class="fa-solid fa-trash-can"></i> Clear Old Data</button>
+            <label class="upload-btn"><i class="fa-solid fa-upload"></i> Upload Data <input type="file" id="csvFileInput" accept=".csv" style="display:none;" onchange="handleCSVUpload(event)"></label>
+        </div>
+      </header>
+
+      <div class="main-container">
+        <div class="sidebar">
+          
+          <div style="display:flex; gap:8px; margin-bottom:15px;">
+              <input type="text" id="loc-search" placeholder="Search Pin/Address (Press Enter)" class="dd-search-input" style="flex:1; padding:8px;">
+              <button class="upload-btn" onclick="searchLocation()" style="padding:8px 12px;" title="Search"><i class="fa-solid fa-search"></i></button>
+              <button class="upload-btn btn-danger" onclick="clearSearch()" style="padding:8px 12px;" title="Clear Search (Esc)"><i class="fa-solid fa-trash"></i></button>
+          </div>
+
+          <div id="polygon-controls">
+            <div class="control-section">
+               <div class="dd-wrapper" id="dd-cluster">
+                <div style="display:flex;">
+                   <div class="dd-trigger" onclick="toggleDropdown('cluster', event)"><span class="dd-label">CLUSTER (COL A)</span><span class="dd-text" id="cluster-text">Select Cluster...</span><i class="fa-solid fa-chevron-down"></i></div>
+                   <div class="clear-btn-ext" id="cluster-clear" onclick="clearSelection('cluster', event)"><i class="fa-solid fa-trash"></i></div>
+                </div><div class="dd-menu" id="cluster-menu"></div>
+              </div>
+            </div>
+
+            <div class="control-section">
+              <div class="dd-wrapper" id="dd-store">
+                <div style="display:flex;">
+                   <div class="dd-trigger" onclick="toggleDropdown('store', event)"><span class="dd-label">STORE NAME (COL C)</span><span class="dd-text" id="store-text">Select Store...</span><i class="fa-solid fa-chevron-down"></i></div>
+                  <div class="clear-btn-ext" id="store-clear" onclick="clearSelection('store', event)"><i class="fa-solid fa-trash"></i></div>
+                </div><div class="dd-menu" id="store-menu"></div>
+              </div>
+            </div>
+
+            <div class="legend-container">
+               <div style="font-weight:700;font-size:0.7rem;color:var(--text-gray);margin-bottom:5px">STATUS LEGEND</div>
+               <div class="legend-grid">
+                  <div class="legend-item"><div class="legend-box" style="background:var(--status-live)"></div>Live</div>
+                  <div class="legend-item"><div class="legend-box" style="background:var(--status-close)"></div>Closed</div>
+                  <div class="legend-item"><div class="legend-box" style="background:var(--status-disrupted)"></div>Disrupted</div>
+                  <div class="legend-item"><div class="legend-box" style="background:var(--status-progress)"></div>Process</div>
+                  <div class="legend-item"><div class="legend-box" style="background:var(--status-upcoming)"></div>Upcoming</div>
+               </div>
+            </div>
+
+            <div id="statusContainer"><div style="text-align:center;padding:30px;color:var(--text-gray)">Loading data...</div></div>
+          </div>
+
+          <div id="heatmap-controls" class="hidden">
+             
+             <div id="rider-metrics-box">
+                 <div class="rm-row"><span>Total Tasks Assigned:</span> <span id="rm-total">0</span></div>
+                 <div class="rm-row"><span>Successful Deliveries:</span> <span id="rm-del" style="color:#006400;">0</span></div>
+                 <div class="rm-row"><span>Failed / Attempted:</span> <span id="rm-att" style="color:#dc2626;">0</span></div>
+                 <div class="rm-row" style="margin-top:5px; padding-top:5px; border-top:1px solid #cbd5e1;">
+                     <span>Success Rate:</span> <span id="rm-rate" style="font-size:1.1rem; font-weight:800;">0%</span>
+                 </div>
+             </div>
+
+             <div style="display:flex; gap:10px; margin-bottom:10px;">
+                 <div class="hm-stat-box hm-delivered" style="flex:1; padding:10px; margin:0;"><div class="hm-stat-val" id="hm-count-del" style="font-size:1.2rem;">0</div><div style="font-size:0.75rem">Delivered</div></div>
+                 <div class="hm-stat-box hm-attempted" style="flex:1; padding:10px; margin:0;"><div class="hm-stat-val" id="hm-count-att" style="font-size:1.2rem;">0</div><div style="font-size:0.75rem">Attempted</div></div>
+             </div>
+             
+             <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button class="report-btn" style="flex:1; background:#4b5563; margin:0; border:1px solid var(--border-slate); font-size:0.8rem;" id="btn-count-mode" onclick="toggleCountMode()"><i class="fa-solid fa-vector-square"></i> Draw Count</button>
+                <button class="report-btn" style="flex:1; background:#d97706; margin:0; border:1px solid var(--border-slate); font-size:0.8rem;" id="btn-thermal-mode" onclick="toggleThermalMode()"><i class="fa-solid fa-fire"></i> Thermal View</button>
+             </div>
+             
+             <div style="display:flex; gap:10px; margin-bottom:15px;">
+                 <button class="report-btn" style="flex:1; background:#3b82f6; margin:0; border:1px solid var(--border-slate); font-size:0.8rem;" id="btn-hex-mode" onclick="toggleHexbinMode()"><i class="fa-solid fa-cube"></i> Hexbin View</button>
+             </div>
+
+             <div class="control-section" style="background:var(--card-bg); padding:10px; border-radius:8px; border:1px solid var(--border-slate);">
+                 <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:var(--text-gray); margin-bottom:5px;">
+                     <span>TIME PROGRESSION</span><span id="slider-time-val" style="color:var(--primary-blue)">ALL TIME</span>
+                 </div>
+                 <input type="range" id="hm-time-slider" min="0" max="100" value="100" style="width:100%" onchange="renderHeatMap()" oninput="updateSliderLabel(this.value)">
+             </div>
+
+             <div class="control-section">
+                <div class="dd-wrapper" id="dd-hm-store">
+                    <div style="display:flex;">
+                        <div class="dd-trigger" onclick="toggleDropdown('hm-store', event)"><span class="dd-label">STORE</span><span class="dd-text" id="hm-store-text">Select...</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="clear-btn-ext" id="hm-store-clear" onclick="clearHMSelection('hm-store', event)" style="display:flex"><i class="fa-solid fa-trash"></i></div>
+                    </div><div class="dd-menu" id="hm-store-menu"></div>
+                </div>
+             </div>
+
+             <div class="control-section">
+                <div class="dd-wrapper" id="dd-hm-date">
+                    <div style="display:flex;">
+                        <div class="dd-trigger" onclick="toggleDropdown('hm-date', event)"><span class="dd-label">DATE</span><span class="dd-text" id="hm-date-text">Select...</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="clear-btn-ext" id="hm-date-clear" onclick="clearHMSelection('hm-date', event)" style="display:flex"><i class="fa-solid fa-trash"></i></div>
+                    </div><div class="dd-menu" id="hm-date-menu"></div>
+                 </div>
+             </div>
+             
+             <div class="control-section">
+                <div class="dd-wrapper" id="dd-hm-time">
+                    <div style="display:flex;">
+                        <div class="dd-trigger" onclick="toggleDropdown('hm-time', event)"><span class="dd-label">TIME SLOT</span><span class="dd-text" id="hm-time-text">Select...</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="clear-btn-ext" id="hm-time-clear" onclick="clearHMSelection('hm-time', event)" style="display:flex"><i class="fa-solid fa-trash"></i></div>
+                    </div><div class="dd-menu" id="hm-time-menu"></div>
+                </div>
+             </div>
+             
+             <div class="control-section">
+                <div class="dd-wrapper" id="dd-hm-status">
+                    <div style="display:flex;">
+                        <div class="dd-trigger" onclick="toggleDropdown('hm-status', event)"><span class="dd-label">STATUS</span><span class="dd-text" id="hm-status-text">Select...</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="clear-btn-ext" id="hm-status-clear" onclick="clearHMSelection('hm-status', event)" style="display:flex"><i class="fa-solid fa-trash"></i></div>
+                    </div><div class="dd-menu" id="hm-status-menu"></div>
+                </div>
+             </div>
+             
+             <div class="control-section">
+                <div class="dd-wrapper" id="dd-hm-rider">
+                    <div style="display:flex;">
+                        <div class="dd-trigger" onclick="toggleDropdown('hm-rider', event)"><span class="dd-label">RIDER TRACE (ROUTE)</span><span class="dd-text" id="hm-rider-text">Select Rider...</span><i class="fa-solid fa-chevron-down"></i></div>
+                    <div class="clear-btn-ext" id="hm-rider-clear" onclick="clearHMSelection('hm-rider', event)" style="display:flex"><i class="fa-solid fa-trash"></i></div>
+                    </div><div class="dd-menu" id="hm-rider-menu"></div>
+                </div>
+             </div>
+          </div>
+        </div>
+        <div class="map-wrapper"><div id="map"></div></div>
+      </div>
+      <div class="app-footer">Created by Aslam Khan</div>
+    </div>
+
+    <script>
+      let map, streetsLayer, satelliteLayer, trafficLayer, polygonsLayer, heatMapLayer, storeIconLayer, heatmapBoundariesLayer, thermalLayer, riderRouteLayer, anomalyLayer;
+      let weatherLayer, hexLayer; // NEW: Layers
+      let allData = [];
+      let storeDataMap = {}; 
+      let heatMapDataRaw = [];
+      let uniqueTimes = []; 
+      
+      let currentView = 'polygon';
+      let state = { cluster: ['ALL'], store: ['ALL'] };
+      let hmState = { store: ['ALL'], status: ['ALL'], date: ['ALL'], time: ['ALL'], rider: ['ALL'] };
+      let isMeasuring = false, measurePoints = [], measureLine = null;
+      let searchMarker = null;
+      let isCountingMode = false, countPoints = [], countPolyline = null, countTempLine = null;
+      let countPolygonsList = [];
+      let isThermalMode = false;
+      let isAnomalyMode = false;
+      let autoRefreshTimer = null;
+      let isDrawingStore = false, drawStorePoints = [], drawStoreLine = null, drawStoreTempLine = null;
+
+      let statusPieChart = null;
+      let orderBarChart = null;
+
+      function triggerClearData() {
+          const check = confirm("Are you sure you want to completely clear the Order Dump tab?");
+          if (!check) return;
+          showAnimatedLoader("Clearing All Data...");
+          google.script.run.withSuccessHandler(function(response) {
+              if (response.startsWith("Success")) { 
+                  showAnimatedSuccess("Sheet Cleared!"); setTimeout(() => { reloadData(false); }, 1200); 
+              } else { hideAnimatedLoader(); alert(response); }
+           }).withFailureHandler(function(err) { hideAnimatedLoader(); alert("Server failed."); }).clearCSVData();
+      }
+
+      function handleCSVUpload(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          showAnimatedLoader("Uploading CSV...");
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              google.script.run.withSuccessHandler(function(response) {
+                  if (response.startsWith("Success")) { 
+                      showAnimatedSuccess("Uploaded!"); setTimeout(() => { reloadData(false); }, 1200); 
+                  } else { hideAnimatedLoader(); alert(response); }
+                  event.target.value = ""; 
+              }).withFailureHandler(function() { hideAnimatedLoader(); alert("Server error."); event.target.value = ""; }).uploadCSVData(e.target.result);
+          }; reader.readAsText(file);
+      }
+
+      function handlePolygonUpload(event) {
+          const file = event.target.files[0];
+          if (!file) return;
+          const isJSON = file.name.endsWith(".json");
+          showAnimatedLoader(`Updating Polygon Data (${isJSON ? 'JSON' : 'CSV'})...`);
+          const reader = new FileReader();
+          reader.onload = function(e) {
+              google.script.run.withSuccessHandler(function(response) {
+                  if (response.startsWith("Success")) { 
+                      showAnimatedSuccess("Polygon Updated!"); setTimeout(() => { reloadData(false); }, 1200); 
+                  } else { hideAnimatedLoader(); alert(response); }
+                  event.target.value = ""; 
+              }).withFailureHandler(function() { hideAnimatedLoader(); alert("Server error."); event.target.value = ""; }).updatePolygonData(e.target.result, isJSON);
+          }; reader.readAsText(file);
+          toggleMenu();
+      }
+
+      function submitNewStore() {
+          const data = {
+              cluster: $('#add-cluster').val().trim(), 
+              storeName: $('#add-store-name').val().trim(),
+              storeId: $('#add-store-id').val().trim(), 
+              shopCoords: $('#add-shop-coords').val().trim(),
+              polyCoords: $('#add-poly-coords').val().trim(),
+              status: $('#add-store-status').val(), 
+              startTime: $('#add-start-time').val().trim(), 
+              endTime: $('#add-end-time').val().trim()
+          };
+          if(!data.cluster || !data.storeName || !data.shopCoords || !data.polyCoords) { 
+              alert("Cluster, Store Name, and Coordinates are mandatory.");
+              return; 
+          }
+          $('#btn-submit-store').text('Saving...').prop('disabled', true);
+          showAnimatedLoader("Saving Store Details...");
+          google.script.run.withSuccessHandler(res => {
+              $('#btn-submit-store').text('Save Store Data').prop('disabled', false);
+              if(res.startsWith("Success")) { 
+                  showAnimatedSuccess("Saved!"); $('#addStoreModal').fadeOut(); 
+                  $('#add-cluster, #add-store-name, #add-store-id, #add-shop-coords, #add-poly-coords').val(''); 
+                  setTimeout(() => reloadData(false), 1200); 
+              } else { hideAnimatedLoader(); alert(res); }
+          }).withFailureHandler(err => { 
+              $('#btn-submit-store').text('Save Store Data').prop('disabled', false); hideAnimatedLoader(); alert("Error: " + err); 
+          }).addStoreData(data);
+      }
+      
+      function deleteStore(storeName) {
+          const pwd = prompt(`Please enter password to delete store: '${storeName}'`);
+          if(pwd !== "123123") {
+              if(pwd !== null) alert("Incorrect Password! Deletion aborted.");
+              return;
+          }
+          if(!confirm(`Are you really sure you want to permanently delete store: ${storeName}?`)) return;
+          showAnimatedLoader(`Deleting ${storeName}...`);
+          google.script.run.withSuccessHandler(res => {
+              if(res.startsWith("Success")) {
+                  showAnimatedSuccess("Store Deleted!"); setTimeout(() => reloadData(false), 1200);
+              } else { hideAnimatedLoader(); alert(res); }
+          }).withFailureHandler(err => { hideAnimatedLoader(); alert("Error: " + err); }).deleteStoreData(storeName);
+      }
+
+      function showAnimatedLoader(text) { $('#mainLoader').css('display', 'flex').hide().fadeIn(150); $('#loaderSpinner').show(); $('#loaderSuccessIcon').hide(); $('#loaderText').text(text); }
+      function showAnimatedSuccess(text) { $('#loaderSpinner').hide(); $('#loaderSuccessIcon').show(); $('#loaderText').text(text); setTimeout(() => { $('#mainLoader').fadeOut(250, function(){ $('#loaderSuccessIcon').hide(); }); }, 800); }
+      function hideAnimatedLoader() { $('#mainLoader').fadeOut(200); }
+
+      $(document).ready(function() {
+         initMap();
+         $(document).on('click', function(e) { if (!$(e.target).closest('.dd-wrapper').length) { $('.dd-wrapper').removeClass('active'); } });
+         $(document).on('keydown', function(e) { if(e.key === "Escape") { exitCountMode(); cancelDrawStore(); clearSearch(); } });
+         
+         $('#loc-search').on('keydown', function(e) {
+             if (e.key === 'Enter') { e.preventDefault(); searchLocation(); } 
+         });
+         
+         toggleAutoRefresh(); // Start auto-refresh out of the box
+      });
+
+      function initMap() {
+         try {
+             map = L.map('map', { preferCanvas: true }).setView([20.5937, 78.9629], 5);
+             streetsLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {maxZoom:20}).addTo(map);
+             satelliteLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}', {maxZoom: 20});
+             trafficLayer = L.tileLayer('https://mt1.google.com/vt?lyrs=h@177,traffic|seconds_into_week:-1&style=3&x={x}&y={y}&z={z}', {maxZoom: 20});
+             
+             // NEW: Free Global Weather Radar (Iowa State Univ - No API Key Needed)
+             weatherLayer = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
+                 layers: 'nexrad-n0r-900913', format: 'image/png', transparent: true, attribution: "Weather data © 2012 IEM Nexrad", opacity: 0.6
+             });
+
+             polygonsLayer = L.layerGroup().addTo(map);
+             storeIconLayer = L.layerGroup().addTo(map);
+             heatMapLayer = L.layerGroup().addTo(map);
+             heatmapBoundariesLayer = L.layerGroup().addTo(map);
+             riderRouteLayer = L.layerGroup().addTo(map);
+             anomalyLayer = L.layerGroup().addTo(map);
+             
+             if (typeof L.heatLayer === 'function') {
+                 thermalLayer = L.heatLayer([], {radius: 20, blur: 15, maxZoom: 16});
+             }
+
+             map.on('click', function(e) { 
+                if(isMeasuring) handleMeasureClick(e.latlng); 
+                if(isCountingMode) handleCountClick(e.latlng);
+                if(isDrawingStore) handleDrawStoreClick(e.latlng);
+             });
+             map.on('mousemove', function(e) { 
+                if(isCountingMode && countPoints.length > 0) {
+                   if(!countTempLine) countTempLine = L.polyline([countPoints[countPoints.length-1], e.latlng], {color: '#ff7800', weight: 2, dashArray: '5, 8'}).addTo(map);
+                   else countTempLine.setLatLngs([countPoints[countPoints.length-1], e.latlng]);
+                }
+                if(isDrawingStore && drawStorePoints.length > 0) {
+                   if(!drawStoreTempLine) drawStoreTempLine = L.polyline([drawStorePoints[drawStorePoints.length-1], e.latlng], {color: '#dc2626', weight: 3, dashArray: '5, 8'}).addTo(map);
+                   else drawStoreTempLine.setLatLngs([drawStorePoints[drawStorePoints.length-1], e.latlng]);
+                }
+             });
+             loadData(false);
+         } catch(e) { alert("Error initializing map: " + e.message); }
+      }
+
+      function toggleMenu() { $('#side-menu').toggleClass('open'); $('.menu-overlay').toggle(); }
+      function toggleDarkMode() { $('body').toggleClass('dark-mode'); }
+      function toggleSatellite() { 
+          if($('#satToggle').is(':checked')) { map.addLayer(satelliteLayer); map.removeLayer(streetsLayer); } 
+          else { map.addLayer(streetsLayer); map.removeLayer(satelliteLayer); } toggleMenu();
+      }
+      function toggleTraffic() { 
+          if($('#trafficToggle').is(':checked')) map.addLayer(trafficLayer);
+          else map.removeLayer(trafficLayer); toggleMenu(); 
+      }
+      function toggleWeather() { 
+          if($('#weatherToggle').is(':checked')) map.addLayer(weatherLayer);
+          else map.removeLayer(weatherLayer); toggleMenu(); 
+      }
+      function toggleFullscreen() { 
+          if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+          else if (document.exitFullscreen) document.exitFullscreen(); toggleMenu(); 
+      }
+      function locateMe() { map.locate({setView: true, maxZoom: 16}); toggleMenu(); }
+
+      // =====================================
+      // NEW: FIREBASE FALLBACK REFRESH LOGIC
+      // =====================================
+      const fbConfig = { databaseURL: "https://YOUR-PROJECT-ID.firebaseio.com" };
+      if (!firebase.apps.length && !fbConfig.databaseURL.includes("YOUR-PROJECT")) { firebase.initializeApp(fbConfig); }
+
+      function toggleAutoRefresh() {
+          const isFBConfigured = !fbConfig.databaseURL.includes("YOUR-PROJECT");
+          if($('#autoRefToggle').is(':checked')) {
+              if(isFBConfigured) {
+                  // Firebase Realtime
+                  firebase.database().ref('map_updates').on('value', (snapshot) => {
+                      if(snapshot.val()) { console.log("DB Updated. Reloading..."); reloadData(true); }
+                  });
+              } else {
+                  // Standard Polling Fallback
+                  clearInterval(autoRefreshTimer);
+                  autoRefreshTimer = setInterval(() => { reloadData(true); }, 180000); 
+              }
+          } else {
+              clearInterval(autoRefreshTimer);
+              if(isFBConfigured) firebase.database().ref('map_updates').off();
+          }
+      }
+      
+      function toggleAnomaly() {
+          isAnomalyMode = $('#anomalyToggle').is(':checked');
+          if(currentView === 'heatmap') renderHeatMap();
+          toggleMenu();
+      }
+
+      // NEW: Hexbin Aggregation Toggle
+      function toggleHexbinMode() {
+          if(hexLayer && map.hasLayer(hexLayer)) {
+              map.removeLayer(hexLayer); heatMapLayer.addTo(map);
+              $('#btn-hex-mode').css({'background':'#3b82f6', 'color':'#fff'}).html('<i class="fa-solid fa-cube"></i> Hexbin View');
+          } else {
+              if(!hexLayer) {
+                  hexLayer = L.hexbinLayer({ radius: 12, opacity: 0.8 }).colorScale().range(['#fde0dd', '#c51b8a']);
+                  hexLayer.lat(function(d) { return d.lat; }).lng(function(d) { return d.lng; });
+              }
+              map.removeLayer(heatMapLayer);
+              if(thermalLayer) map.removeLayer(thermalLayer);
+              hexLayer.addTo(map);
+              
+              const currentVisibleData = heatMapDataRaw.filter(d => {
+                  if(!hmState.store.includes('ALL') && !hmState.store.includes(d.store)) return false;
+                  if(!hmState.status.includes('ALL') && !hmState.status.includes(d.status)) return false;
+                  return true;
+              });
+              hexLayer.data(currentVisibleData);
+              $('#btn-hex-mode').css({'background':'#c51b8a', 'color':'#fff'}).html('<i class="fa-solid fa-circle-dot"></i> Point View');
+          }
+      }
+
+      function searchLocation() {
+          let q = $('#loc-search').val();
+          if(!q) return;
+          $('#loc-search').val("Searching...");
+          $.getJSON('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q + ", India"), function(data) {
+              $('#loc-search').val(q);
+              if(data && data.length > 0) {
+                  let lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                  map.flyTo([lat, lon], 15);
+                  let foundStore = "No Store Found (Out of Coverage)";
+                  for(let i=0; i < allData.length; i++) {
+                      let row = allData[i];
+                      if(row.coords && row.coords.length > 2) {
+                          let vs = row.coords.map(c => { let p = c.trim().split(','); return [parseFloat(p[1]), parseFloat(p[0])]; }).filter(p => !isNaN(p[0]));
+                          if(pointInPolygon([lat, lon], vs)) { foundStore = row.name; break; }
+                      }
+                  }
+                  if(searchMarker) map.removeLayer(searchMarker);
+                  searchMarker = L.marker([lat, lon]).addTo(map).bindPopup(`<div style="font-size:13px"><b>Location:</b> ${data[0].display_name}<br><br><b style="color:var(--primary-blue)">Serviceable By: ${foundStore}</b></div>`).openPopup();
+              } else { alert("Location not found."); }
+          }).fail(function() { $('#loc-search').val(q); alert("Search Service Error."); });
+      }
+      
+      function clearSearch() { $('#loc-search').val(''); if (searchMarker) { map.removeLayer(searchMarker); searchMarker = null; } }
+
+      function startDrawStore() {
+          toggleMenu();
+          isDrawingStore = true; drawStorePoints = [];
+          $('.map-wrapper').addClass('draw-mode'); map.dragging.disable();
+          $('#drawing-tools').css('display', 'flex');
+      }
+
+      function handleDrawStoreClick(latlng) {
+          drawStorePoints.push(latlng);
+          if(drawStorePoints.length === 1) drawStoreLine = L.polyline(drawStorePoints, {color: '#dc2626', weight: 3}).addTo(map); 
+          else drawStoreLine.setLatLngs(drawStorePoints);
+      }
+
+      function finishDrawStore() {
+          if(drawStorePoints.length < 3) { alert("Please click at least 3 points on the map to form an area."); return; }
+          let poly = L.polygon(drawStorePoints); let center = poly.getBounds().getCenter();
+          $('#add-shop-coords').val(`${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`);
+          let polyStr = drawStorePoints.map(p => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`).join(' | ');
+          $('#add-poly-coords').val(polyStr);
+          cancelDrawStore(); $('#addStoreModal').fadeIn();
+      }
+
+      function cancelDrawStore() {
+          isDrawingStore = false;
+          drawStorePoints = [];
+          $('.map-wrapper').removeClass('draw-mode'); map.dragging.enable(); $('#drawing-tools').hide();
+          if(drawStoreLine) map.removeLayer(drawStoreLine);
+          if(drawStoreTempLine) { map.removeLayer(drawStoreTempLine); drawStoreTempLine = null; }
+      }
+
+      function toggleThermalMode() {
+          if(!thermalLayer) { alert("Thermal Plugin failed to load. Check internet connection."); return; }
+          isThermalMode = !isThermalMode;
+          const btn = $('#btn-thermal-mode');
+          if(isThermalMode) {
+              btn.css({'background':'#dc2626', 'color':'#fff'}).html('<i class="fa-solid fa-circle-dot"></i> Point Map');
+              map.removeLayer(heatMapLayer); thermalLayer.addTo(map);
+          } else {
+              btn.css({'background':'#d97706', 'color':'#fff'}).html('<i class="fa-solid fa-fire"></i> Thermal View');
+              map.removeLayer(thermalLayer); heatMapLayer.addTo(map);
+          }
+          setTimeout(() => { renderHeatMap(); }, 10);
+      }
+
+      function updateSliderLabel(val) {
+          if(val == 100) $('#slider-time-val').text("ALL TIME");
+          else { let idx = Math.floor((val / 100) * (uniqueTimes.length - 1)); $('#slider-time-val').text("Up to " + (uniqueTimes[idx] || "ALL TIME")); }
+      }
+
+      function toggleMeasure() {
+          isMeasuring = $('#measureToggle').is(':checked');
+          if(isMeasuring) { $('.map-wrapper').addClass('measure-mode'); measurePoints = []; if(measureLine) map.removeLayer(measureLine); } 
+          else { $('.map-wrapper').removeClass('measure-mode'); if(measureLine) map.removeLayer(measureLine); } toggleMenu();
+      }
+
+      function handleMeasureClick(latlng) {
+          measurePoints.push(latlng);
+          if(measurePoints.length === 2) {
+              const p1 = measurePoints[0], p2 = measurePoints[1];
+              const dist = p1.distanceTo(p2); 
+              measureLine = L.polyline(measurePoints, {color: 'red', dashArray: '5, 10'}).addTo(map);
+              const distText = dist > 1000 ? (dist/1000).toFixed(2) + " km" : dist.toFixed(0) + " meters";
+              L.popup().setLatLng(p2).setContent("<b>Distance:</b> " + distText).openOn(map); measurePoints = [];
+          }
+      }
+
+      function toggleCountMode() {
+         isCountingMode = !isCountingMode;
+         const btn = $('#btn-count-mode');
+         if(isCountingMode) {
+            $('.map-wrapper').addClass('area-count-mode'); map.dragging.disable();
+            countPoints = [];
+            btn.css({'background':'#dc2626', 'color':'#fff'}).html('<i class="fa-solid fa-times"></i> Cancel Count');
+         } else { exitCountMode(); }
+      }
+
+      function handleCountClick(latlng) {
+         if(!isCountingMode) return;
+         if(countPoints.length >= 2 && latlng.distanceTo(countPoints[0]) < 100) { finishOrderCount(); return; }
+         countPoints.push(latlng);
+         if(countPoints.length === 1) countPolyline = L.polyline(countPoints, {color: '#ff7800', weight: 3}).addTo(map); 
+         else countPolyline.setLatLngs(countPoints);
+      }
+
+      function finishOrderCount() {
+         if (countPoints.length < 3) return;
+         if (countTempLine) { map.removeLayer(countTempLine); countTempLine = null; }
+         
+         let cp = L.polygon(countPoints, {color: '#ff7800', fillOpacity: 0.2}).addTo(map);
+         countPolygonsList.push(cp); if (countPolyline) map.removeLayer(countPolyline);
+
+         let vs = countPoints.map(p => [p.lat, p.lng]);
+         let dotsInside = 0, delInside = 0, attInside = 0;
+         heatMapDataRaw.forEach(d => {
+             if(hmState.store.length===0 || hmState.status.length===0 || hmState.time.length===0 || hmState.date.length===0) return;
+             if(!hmState.store.includes('ALL') && !hmState.store.includes(d.store)) return;
+             if(!hmState.status.includes('ALL') && !hmState.status.includes(d.status)) return;
+             if(!hmState.date.includes('ALL') && !hmState.date.includes(d.date)) return;
+             if(!hmState.time.includes('ALL') && !hmState.time.includes(d.time)) return;
+             if (pointInPolygon([d.lat, d.lng], vs)) { dotsInside++; if(d.status.toLowerCase().includes('del')) delInside++; else attInside++; }
+         });
+         L.popup().setLatLng(cp.getBounds().getCenter()).setContent(`<div style="text-align:center;"><b>Total Selected: ${dotsInside}</b><br><span style="color:green">Delivered: ${delInside}</span> | <span style="color:red">Attempted: ${attInside}</span></div>`).openOn(map);
+         countPoints = [];
+      }
+
+      function pointInPolygon(point, vs) {
+          var x = point[0], y = point[1], inside = false;
+          for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+              var xi = vs[i][0], yi = vs[i][1], xj = vs[j][0], yj = vs[j][1];
+              var intersect = ((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+              if (intersect) inside = !inside;
+          } return inside;
+      }
+
+      function exitCountMode() {
+         isCountingMode = false;
+         $('.map-wrapper').removeClass('area-count-mode'); map.dragging.enable();
+         if(countPolyline) map.removeLayer(countPolyline);
+         if(countTempLine) { map.removeLayer(countTempLine); countTempLine = null; }
+         countPolygonsList.forEach(p => map.removeLayer(p)); countPolygonsList = []; countPoints = [];
+         $('#btn-count-mode').css({'background':'#4b5563', 'color':'#fff'}).html('<i class="fa-solid fa-vector-square"></i> Draw Count');
+      }
+
+      function showAnalytics() {
+          $('#analyticsModal').css('display','flex').hide().fadeIn(); toggleMenu();
+          let counts = { 'LIVE': 0, 'CLOSED': 0, 'DISRUPTED': 0, 'PROCESS': 0, 'UPCOMING': 0, 'UNKNOWN': 0 };
+          allData.forEach(r => { 
+              const s = getStatus(r); 
+              if(counts[s.text] !== undefined) counts[s.text]++; 
+              else counts['UNKNOWN']++; 
+          });
+          $('#an-total').text(allData.length); 
+          $('#an-live').text(counts['LIVE']); $('#an-closed').text(counts['CLOSED']); 
+          $('#an-disrupt').text(counts['DISRUPTED']); $('#an-progress').text(counts['PROCESS']);
+          $('#an-upcoming').text(counts['UPCOMING']); $('#an-unknown').text(counts['UNKNOWN']);
+          
+          if(statusPieChart) statusPieChart.destroy();
+          if(orderBarChart) orderBarChart.destroy();
+          
+          const ctxPie = document.getElementById('statusPieChart').getContext('2d');
+          statusPieChart = new Chart(ctxPie, {
+              type: 'doughnut',
+              data: { labels: ['Live', 'Closed', 'Disrupted', 'Process'], datasets: [{ data: [counts['LIVE'], counts['CLOSED'], counts['DISRUPTED'], counts['PROCESS']], backgroundColor: ['#006400', '#dc2626', '#d97706', '#2563eb'] }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels:{color:'#94a3b8'} }, title: {display: true, text: 'Store Status', color:'#1e293b'} } }
+          });
+          
+          let hmDel = parseInt($('#hm-count-del').text()) || 0;
+          let hmAtt = parseInt($('#hm-count-att').text()) || 0;
+          const ctxBar = document.getElementById('orderBarChart').getContext('2d');
+          orderBarChart = new Chart(ctxBar, {
+              type: 'bar',
+              data: { labels: ['Delivered', 'Attempted'], datasets: [{ label: 'Order Volume', data: [hmDel, hmAtt], backgroundColor: ['#006400', '#dc2626'] }] },
+              options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: {display: true, text: 'Order Heatmap Stats', color:'#1e293b'} }, scales: { y: { beginAtZero: true, ticks:{color:'#94a3b8'} }, x:{ticks:{color:'#94a3b8'}} } }
+          });
+      }
+      
+      function downloadPDFReport() {
+          const element = document.getElementById('analytics-pdf-content');
+          const opt = { margin: 10, filename: 'Store_Ops_Report.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+          html2pdf().set(opt).from(element).save();
+      }
+      
+      function downloadKML(idx) {
+          const row = allData[idx];
+          if(!row || !row.coords || row.coords.length < 3) { alert("No coordinate data available."); return; }
+          let validPoints = [];
+          row.coords.forEach(c => { 
+              const p = c.trim().split(','); 
+              if(p.length === 2) { 
+                  const lon = parseFloat(p[0]), lat = parseFloat(p[1]); 
+                  if(!isNaN(lon) && !isNaN(lat)) { validPoints.push(`${lon},${lat},0`); } 
+              } 
+          });
+          if(validPoints.length < 3) { alert("Not enough valid coordinates."); return; }
+          validPoints.push(validPoints[0]);
+          const coordsString = validPoints.join('\n');
+          const kmlContent = '<' + '?xml version="1.0" encoding="UTF-8"?'+ '>\n' + `<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${row.name} Polygon Area</name><Placemark><name>${row.name}</name><Polygon><outerBoundaryIs><LinearRing><coordinates>\n${coordsString}\n</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark></Document></kml>`;
+          const blob = new Blob([kmlContent], {type: "application/vnd.google-earth.kml+xml"});
+          const url = URL.createObjectURL(blob); 
+          const link = document.createElement("a"); link.href = url;
+          link.download = `${row.name.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}_polygon.kml`;
+          document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+      }
+
+      function switchView(view) {
+         currentView = view;
+         $('.view-btn').removeClass('active'); $('#btn-view-' + (view === 'polygon' ? 'poly' : 'heat')).addClass('active');
+         if(view === 'polygon') {
+            $('#polygon-controls').show(); $('#heatmap-controls').addClass('hidden');
+            polygonsLayer.addTo(map); storeIconLayer.addTo(map); heatMapLayer.remove();
+            if(thermalLayer) thermalLayer.remove(); 
+            if(hexLayer) map.removeLayer(hexLayer);
+            riderRouteLayer.remove(); anomalyLayer.remove(); heatmapBoundariesLayer.clearLayers();
+            if(allData.length === 0) loadData(false); else updateMapInternal(); 
+            exitCountMode();
+         } else {
+            $('#polygon-controls').hide(); $('#heatmap-controls').removeClass('hidden');
+            polygonsLayer.remove(); storeIconLayer.remove(); heatmapBoundariesLayer.addTo(map);
+            if(isThermalMode && thermalLayer) thermalLayer.addTo(map); 
+            else if(hexLayer && map.hasLayer(hexLayer)) hexLayer.addTo(map);
+            else heatMapLayer.addTo(map);
+            
+            if(isAnomalyMode) anomalyLayer.addTo(map);
+            
+            if(heatMapDataRaw.length === 0) loadHeatMapData(false); 
+            else setTimeout(() => { renderHeatMap(); }, 10);
+         }
+      }
+
+      function reloadData(silent = false) { 
+         if(currentView === 'polygon') loadData(silent);
+         else loadHeatMapData(silent); 
+      }
+
+      function loadData(silent) {
+         if(!silent) showAnimatedLoader("Loading Store Data...");
+         google.script.run.withSuccessHandler(json => {
+            allData = JSON.parse(json); 
+            if(allData.length && allData[0].error) { if(!silent) { hideAnimatedLoader(); alert(allData[0].error); } return; }
+            
+            storeDataMap = {};
+            allData.forEach((row, idx) => { storeDataMap[row.name.trim().toLowerCase()] = Object.assign({}, row, {idx: idx}); });
+
+            refreshClusterDropdown(); 
+            renderDropdown('store', getStoresByCluster(), state.store); updateMapInternal();
+            if(!silent) showAnimatedSuccess("Loaded!");
+            
+            if(heatMapDataRaw.length === 0) { 
+                google.script.run.withSuccessHandler(hmJson => { 
+                    heatMapDataRaw = JSON.parse(hmJson); 
+                    if(!(heatMapDataRaw.length && heatMapDataRaw[0].error)) { initHeatMapFilters(); } 
+                }).getHeatMapData(); 
+            }
+         }).withFailureHandler(err => { if(!silent) { hideAnimatedLoader(); alert("Server Error or Timeout."); } }).getSheetData();
+      }
+
+      function loadHeatMapData(silent) {
+         if(!silent) showAnimatedLoader("Loading Heatmap Coordinates...");
+         google.script.run.withSuccessHandler(json => {
+            heatMapDataRaw = JSON.parse(json);
+            if(heatMapDataRaw.length && heatMapDataRaw[0].error) { if(!silent) { hideAnimatedLoader(); alert(heatMapDataRaw[0].error); } return; }
+            initHeatMapFilters(); renderHeatMap();
+            if(!silent) showAnimatedSuccess("Loaded!"); 
+         }).withFailureHandler(err => { if(!silent) { hideAnimatedLoader(); alert("Server Error fetching Map Data."); } }).getHeatMapData();
+      }
+
+      function toggleDropdown(type, e) { e.stopPropagation(); $('.dd-wrapper').not(`#dd-${type}`).removeClass('active'); $(`#dd-${type}`).toggleClass('active'); }
+
+      function refreshClusterDropdown() {
+         const s = new Set();
+         allData.forEach(r => { if(r.cluster) s.add(r.cluster); });
+         renderDropdown('cluster', Array.from(s).sort().map(c => ({label:c, value:c})), state.cluster);
+      }
+
+      function getStoresByCluster() {
+         let storeList = [];
+         allData.forEach((r, index) => { 
+             if(state.cluster.includes('ALL') || state.cluster.includes(r.cluster)) { storeList.push({label: r.name, value: String(index)}); } 
+         });
+         return storeList;
+      }
+
+      function renderDropdown(type, items, selected) {
+         const menu = $(`#${type}-menu`).empty();
+         menu.append(`<div class="dd-search-container"><input class="dd-search-input" placeholder="Search..." onkeyup="filterDD(this, '${type}')"></div>`);
+         const isAll = selected.includes('ALL');
+         let html = `<div class="dd-item ${isAll?'selected':''}" onclick="selectItem('${type}','ALL', event)"><div class="dd-checkbox"><i class="fa-solid fa-check"></i></div>All</div>`;
+         if(items.length === 0 && type === 'store') { 
+             html = `<div style="padding:15px;text-align:center;font-size:0.8rem;color:#888">Select Cluster first</div>`;
+         } else { 
+             let buffer = "";
+             items.forEach(i => { 
+                 const isSel = isAll || selected.includes(i.value); 
+                 buffer += `<div class="dd-item ${isSel?'selected':''}" onclick="selectItem('${type}','${i.value}', event)"><div class="dd-checkbox"><i class="fa-solid fa-check"></i></div><span class="item-text">${i.label}</span></div>`; 
+             });
+             html += buffer;
+         }
+         menu.append(html); 
+         const txt = $(`#${type}-text`), clr = $(`#${type}-clear`);
+         if(selected.length === 0) { txt.text("Select..."); clr.hide(); } 
+         else { txt.text(selected.includes('ALL') ? "All Selected" : `${selected.length} Selected`); clr.css('display','flex'); }
+      }
+
+      function filterDD(input, type) { 
+          const val = input.value.toUpperCase();
+          $(`#${type}-menu .dd-item`).each(function() { 
+              const t = $(this).text().toUpperCase(); $(this).toggle(t.indexOf(val) > -1 || t === 'ALL'); 
+          });
+      }
+
+      function selectItem(type, val, event) {
+         if(event) event.stopPropagation();
+         if(type === 'cluster' || type === 'store') {
+             let current = state[type];
+             if(val === 'ALL') { state[type] = current.includes('ALL') ? [] : ['ALL']; } 
+             else { 
+                 if(current.includes('ALL')) state[type] = [val];
+                 else { if(current.includes(val)) state[type] = current.filter(v => v !== val); else state[type].push(val); } 
+             }
+             if(type === 'cluster') { state.store = state.cluster.length > 0 ? ['ALL'] : []; renderDropdown('store', getStoresByCluster(), state.store); } else { renderDropdown('store', getStoresByCluster(), state.store); }
+             updateMapInternal();
+             if(type === 'cluster') { const clusterItems = Array.from(new Set(allData.map(r => r.cluster))).filter(c=>c).sort().map(c => ({label:c, value:c})); renderDropdown('cluster', clusterItems, state.cluster); }
+         }
+      }
+      
+      function clearSelection(type, e) {
+         e.stopPropagation();
+         state[type] = [];
+         if(type === 'cluster') { state.store = []; renderDropdown('store', [], []); } else { renderDropdown('store', getStoresByCluster(), []); }
+         const clusterItems = Array.from(new Set(allData.map(r => r.cluster))).filter(c=>c).sort().map(c => ({label:c, value:c}));
+         renderDropdown(type, type==='cluster' ? clusterItems : getStoresByCluster(), []); updateMapInternal();
+      }
+
+      function updateMapInternal() {
+         polygonsLayer.clearLayers();
+         storeIconLayer.clearLayers(); $('#statusContainer').empty(); 
+         let indices = [];
+         if(state.store.includes('ALL')) indices = getStoresByCluster().map(s => parseInt(s.value)); 
+         else indices = state.store.map(s => parseInt(s));
+         if(indices.length === 0) { $('#statusContainer').html('<div style="text-align:center;padding:30px;color:var(--text-gray)">No stores selected.</div>'); return; }
+         
+         const bounds = L.latLngBounds();
+         let html = `<div style="padding: 12px 15px; background: var(--hover-blue); border-radius: 8px; margin-bottom: 15px; font-weight: 700; font-size: 0.95rem; color: var(--primary-blue); border: 1px solid var(--border-slate); display: flex; align-items: center; gap: 10px;">Total Stores: ${indices.length}</div>`;
+         indices.forEach(idx => {
+            const row = allData[idx]; if(!row) return; const st = getStatus(row);
+            
+            html += `
+            <div class="status-card ${st.css}">
+                <div style="display:flex;justify-content:space-between">
+                    <span class="store-name">${row.name}</span>
+                    <span style="font-size:0.7rem;background:${st.color};color:#fff;padding:2px 6px;border-radius:4px">${st.text}</span>
+                </div>
+                <div class="time-row"><span>Time:</span><span>${row.startTime} - ${row.endTime}</span></div>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button class="map-link-btn" style="margin-top:0;" onclick="map.flyTo([${row.storeLat},${row.storeLng}], 16)">View on Map</button>
+                    <button class="map-link-btn" style="margin-top:0; color:#334155; border-color:#94a3b8;" onclick="downloadKML(${idx})"><i class="fa-solid fa-download"></i> KML</button>
+                    <button class="map-link-btn" style="margin-top:0; color:#dc2626; border-color:#fca5a5;" onclick="deleteStore('${row.name}')"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`;
+            
+            if(row.coords.length > 0) {
+               try { 
+                  const stdPoints = row.coords.map(c => { 
+                      const p = c.trim().split(','); return [parseFloat(p[1]), parseFloat(p[0])]; 
+                  }).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+                  
+                  if(stdPoints.length > 2) { 
+                      L.polygon(stdPoints, { color: '#000000', fillColor: st.color, fillOpacity: 0.3, weight: 3 }).bindTooltip(row.name).addTo(polygonsLayer); 
+                      stdPoints.forEach(p => bounds.extend(p)); 
+                  }
+               } catch(e){}
+             }
+             
+            if(row.storeLat) {
+               const icon = L.divIcon({ className: '', html: `<div class="store-icon-marker" style="width:28px;height:28px;border-color:${st.color}"><i class="fa-solid fa-store" style="color:${st.color};font-size:14px"></i></div>` });
+               L.marker([row.storeLat, row.storeLng], {icon: icon}).bindPopup(`<b>${row.name}</b><br>${st.text}`).addTo(storeIconLayer); bounds.extend([row.storeLat, row.storeLng]); 
+            }
+         });
+         
+         $('#statusContainer').html(html);
+         if (bounds.isValid()) { map.fitBounds(bounds, {padding: [40, 40], maxZoom: 16}); }
+      }
+
+      function getStatus(row) {
+         const s = row.status ? row.status.toUpperCase() : "";
+         if(s.includes('HOLD') || s.includes('DISRUPT')) return {text:'DISRUPTED', css:'bg-disrupted', color:'#d97706'};
+         if(s.includes('UPCOM')) return {text:'UPCOMING', css:'bg-upcoming', color:'#9333ea'};
+         if(s.includes('PROC')) return {text:'PROCESS', css:'bg-progress', color:'#2563eb'};
+         if(s.includes('CLOS')) return {text:'CLOSED', css:'bg-close', color:'#dc2626'};
+         if(s.includes('LIVE')) return {text:'LIVE', css:'bg-live', color:'#006400'}; 
+         return {text:'UNKNOWN', css:'bg-unknown', color:'#64748b'};
+      }
+
+      function initHeatMapFilters() {
+          const availStores = new Set(), availStatuses = new Set(), availDates = new Set(), availTimes = new Set(), availRiders = new Set(), timeSet = new Set();
+          heatMapDataRaw.forEach(d => {
+              if(d.store) availStores.add(d.store); 
+              if(d.status) availStatuses.add(d.status); 
+              if(d.date) availDates.add(d.date); 
+              if(d.time) { availTimes.add(d.time); timeSet.add(d.time); }
+              if(d.riderId && d.riderId.trim()!=="") availRiders.add(d.riderName + " (" + d.riderId + ")");
+          });
+          
+          uniqueTimes = Array.from(timeSet).sort((a, b) => {
+              let numA = parseInt((a.match(/\d+/) || [0])[0], 10);
+              let numB = parseInt((b.match(/\d+/) || [0])[0], 10);
+              return numA - numB;
+          });
+          renderHMDD('hm-store', Array.from(availStores).sort().map(s=>({label:s, value:s})));
+          renderHMDD('hm-date', Array.from(availDates).sort().map(s=>({label:s, value:s})));
+          renderHMDD('hm-status', Array.from(availStatuses).sort().map(s=>({label:s, value:s})));
+          renderHMDD('hm-time', uniqueTimes.map(s=>({label:s, value:s})));
+          renderHMDD('hm-rider', Array.from(availRiders).sort().map(s=>({label:s, value:s})));
+      }
+
+      function renderHMDD(type, items) {
+          const menu = $(`#${type}-menu`).empty();
+          menu.append(`<div class="dd-search-container"><input class="dd-search-input" placeholder="Search..." onkeyup="filterDD(this, '${type}')"></div>`);
+          let selected = hmState[type.split('-')[1]]; 
+          const isAll = selected.includes('ALL');
+          let html = `<div class="dd-item ${isAll?'selected':''}" onclick="selectHM('${type}','ALL', event)"><div class="dd-checkbox"><i class="fa-solid fa-check"></i></div>All</div>`;
+          
+          let buffer = "";
+          items.forEach(i => { 
+              const isSel = isAll || selected.includes(i.value); 
+              buffer += `<div class="dd-item ${isSel?'selected':''}" onclick="selectHM('${type}','${i.value}', event)"><div class="dd-checkbox"><i class="fa-solid fa-check"></i></div>${i.label}</div>`; 
+          });
+          html += buffer;
+          menu.append(html);
+          
+          const txt = $(`#${type}-text`), clr = $(`#${type}-clear`);
+          if(selected.length === 0) { txt.text("Select..."); clr.hide(); } 
+          else if(selected.includes('ALL')) { txt.text("All Selected"); clr.css('display','flex'); } 
+          else { txt.text(`${selected.length} Selected`); clr.css('display','flex'); }
+      }
+
+      function selectHM(type, val, event) {
+          if(event) event.stopPropagation();
+          let key = type.split('-')[1]; let st = hmState[key];
+          if(val === 'ALL') { st = st.includes('ALL') ? [] : ['ALL']; } 
+          else { 
+              if(st.includes('ALL')) st = [val];
+              else { if(st.includes(val)) st = st.filter(v=>v!==val); else st.push(val); } 
+          }
+          hmState[key] = st;
+          initHeatMapFilters(); setTimeout(() => { renderHeatMap(); }, 10);
+      }
+      
+      function clearHMSelection(type, e) { 
+          e.stopPropagation();
+          hmState[type.split('-')[1]] = ['ALL']; initHeatMapFilters(); setTimeout(() => { renderHeatMap(); }, 10);
+      }
+
+      function renderHeatMap() {
+          heatMapLayer.clearLayers(); heatmapBoundariesLayer.clearLayers();
+          riderRouteLayer.clearLayers(); anomalyLayer.clearLayers();
+          
+          let thermalData = [];
+          let currentHexData = []; // NEW: Array for Hexbin Data
+          
+          let del = 0, att = 0; const bounds = L.latLngBounds();
+          if(hmState.store.length === 0 || hmState.status.length === 0 || hmState.time.length === 0 || hmState.date.length === 0) { 
+              $('#hm-count-del').text(0); $('#hm-count-att').text(0); 
+              if(thermalLayer) thermalLayer.setLatLngs([]); 
+              if(hexLayer) hexLayer.data([]);
+              return; 
+          }
+
+          let visibleStores = new Set();
+          let sliderVal = $('#hm-time-slider').val();
+          let maxTimeIndex = Math.floor((sliderVal / 100) * (uniqueTimes.length - 1));
+          let maxTime = uniqueTimes[maxTimeIndex];
+          let maxTimeNum = parseInt((String(maxTime).match(/\d+/) || [0])[0], 10);
+
+          let riderPathPoints = [];
+          let anomalyBins = {};
+          
+          heatMapDataRaw.forEach(d => {
+              if(!hmState.store.includes('ALL') && !hmState.store.includes(d.store)) return;
+              if(!hmState.status.includes('ALL') && !hmState.status.includes(d.status)) return;
+              if(!hmState.date.includes('ALL') && !hmState.date.includes(d.date)) return;
+              if(!hmState.time.includes('ALL') && !hmState.time.includes(d.time)) return;
+              
+              let rStr = d.riderName + " (" + d.riderId + ")";
+              if(!hmState.rider.includes('ALL') && !hmState.rider.includes(rStr)) return;
+              
+              let dTimeNum = parseInt((String(d.time).match(/\d+/) || [0])[0], 10);
+              if(sliderVal != 100 && dTimeNum > maxTimeNum) return; 
+              
+              visibleStores.add(d.store); 
+              currentHexData.push(d); // Push valid data to hex array
+              
+              const isDel = d.status.toLowerCase().includes('del');
+              
+              if(isDel) del++; else {
+                  att++;
+                  if(isAnomalyMode) {
+                      let binKey = `${parseFloat(d.lat).toFixed(3)}_${parseFloat(d.lng).toFixed(3)}`;
+                      if(!anomalyBins[binKey]) anomalyBins[binKey] = {count: 0, latSum: 0, lngSum: 0};
+                      anomalyBins[binKey].count++;
+                      anomalyBins[binKey].latSum += parseFloat(d.lat);
+                      anomalyBins[binKey].lngSum += parseFloat(d.lng);
+                  }
+              }
+              
+              if(!hmState.rider.includes('ALL')) riderPathPoints.push({lat: d.lat, lng: d.lng, time: d.time});
+              let storeNode = storeDataMap[d.store.trim().toLowerCase()];
+              let distHtml = "";
+              if (storeNode && storeNode.storeLat) {
+                  let dMeters = L.latLng(d.lat, d.lng).distanceTo(L.latLng(storeNode.storeLat, storeNode.storeLng));
+                  let dKm = (dMeters / 1000).toFixed(2);
+                  let etaMins = Math.max(1, Math.round((dKm / 25) * 60)); // Avg 25km/h
+                  distHtml = `<br><b style="color:var(--primary-blue)"><i class="fa-solid fa-route"></i> Distance to Store:</b> ${dKm} km<br><b>ETA:</b> ~${etaMins} mins`;
+              }
+
+              if(isThermalMode && thermalLayer) {
+                  thermalData.push([d.lat, d.lng, isDel ? 0.8 : 1.0]);
+              } else {
+                  const color = isDel ? '#4169E1' : '#dc2626'; 
+                  L.circleMarker([d.lat, d.lng], {radius: 5, color: '#fff', weight:1, fillColor: color, fillOpacity: 0.8})
+                       .bindPopup(`<div style="font-size:0.85rem"><b>Store:</b> ${d.store}<br><b>Customer:</b> ${d.customerName}<br><b>Status:</b> ${d.status}<br><b>Rider:</b> ${d.riderName} <span style="color:#64748b">(${d.riderId})</span><br><b>Time:</b> ${d.time}<br><b>Date:</b> ${d.date}${distHtml}</div>`)
+                       .addTo(heatMapLayer);
+              }
+              bounds.extend([d.lat, d.lng]); 
+          });
+          
+          if(isThermalMode && thermalLayer) { thermalLayer.setLatLngs(thermalData); }
+          if(hexLayer && map.hasLayer(hexLayer)) { hexLayer.data(currentHexData); } // Update Hexbin data
+          
+          if(isAnomalyMode) {
+              let pulseIcon = L.divIcon({ className: 'custom-anomaly-icon', html: '<div class="anomaly-pulse"></div>', iconSize: [45, 45], iconAnchor: [22, 22] });
+              Object.values(anomalyBins).forEach(bin => {
+                  if(bin.count > 2) { 
+                      let cLat = bin.latSum / bin.count;
+                      let cLng = bin.lngSum / bin.count;
+                      L.marker([cLat, cLng], {icon: pulseIcon})
+                       .bindTooltip(`<b><i class="fa-solid fa-triangle-exclamation"></i> High Failure Zone</b><br>${bin.count} Attempted Orders`)
+                       .addTo(anomalyLayer);
+                  }
+              });
+              anomalyLayer.addTo(map);
+          }
+
+          if(!hmState.rider.includes('ALL')) {
+              $('#rider-metrics-box').css('display', 'flex');
+              let rTotal = del + att;
+              let rate = rTotal > 0 ? Math.round((del / rTotal) * 100) : 0;
+              $('#rm-total').text(rTotal); $('#rm-del').text(del); $('#rm-att').text(att); $('#rm-rate').text(rate + "%");
+              
+              if(riderPathPoints.length > 1) {
+                  riderPathPoints.sort((a,b) => (a.time > b.time) ? 1 : ((b.time > a.time) ? -1 : 0));
+                  let routeLatLngs = riderPathPoints.map(p => [p.lat, p.lng]);
+                  L.polyline(routeLatLngs, {color: '#9333ea', weight: 4, dashArray: '5, 10'}).addTo(riderRouteLayer);
+                  riderRouteLayer.addTo(map);
+              }
+          } else {
+              $('#rider-metrics-box').hide();
+          }
+
+          let visibleStoreNames = Array.from(visibleStores).map(s => s.trim().toLowerCase());
+          allData.forEach(row => {
+              if (row.name && visibleStoreNames.includes(row.name.trim().toLowerCase())) {
+                  const st = getStatus(row);
+                  if(row.coords && row.coords.length > 0) {
+                      try {
+                          const stdPoints = row.coords.map(c => { const p = c.trim().split(','); return [parseFloat(p[1]), parseFloat(p[0])]; }).filter(p => !isNaN(p[0]) && !isNaN(p[1]));
+                          if(stdPoints.length > 2) { L.polygon(stdPoints, { color: '#000000', fillColor: st.color, fillOpacity: 0.1, weight: 2, opacity: 0.5, interactive: false }).addTo(heatmapBoundariesLayer); stdPoints.forEach(p => bounds.extend(p)); }
+                      } catch(e){}
+                  }
+                  if(row.storeLat) {
+                      const icon = L.divIcon({ className: '', html: `<div class="store-icon-marker" style="width:28px;height:28px;border-color:${st.color}"><i class="fa-solid fa-store" style="color:${st.color};font-size:14px"></i></div>` });
+                      L.marker([row.storeLat, row.storeLng], {icon: icon}).bindPopup(`<b>${row.name}</b>`).addTo(heatmapBoundariesLayer); bounds.extend([row.storeLat, row.storeLng]); 
+                  }
+              }
+          });
+          $('#hm-count-del').text(del); $('#hm-count-att').text(att); 
+          if(bounds.isValid()) { map.fitBounds(bounds, {padding: [40, 40], maxZoom: 16}); }
+      }
+    </script>
+  </body>
+</html>
