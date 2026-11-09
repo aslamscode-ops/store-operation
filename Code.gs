@@ -9,7 +9,7 @@ function doGet() {
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
     .setTitle('Area Map View') 
-    .setFaviconUrl('https://uxwing.com/wp-content/themes/uxwing/download/brands-and-social-media/flipkart-icon.png')
+    .setFaviconUrl('https://images.icon-icons.com/1320/PNG/512/-cloud-confirm_86838.png')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
@@ -17,6 +17,25 @@ function doGet() {
 function getSS() {
   try { return SpreadsheetApp.openById(SS_ID); } catch(e) { return null; }
 }
+
+// ── Multi-City Support ─────────────────────────────────────────
+// Called when user switches to a different city spreadsheet
+function getSheetDataForCity(ssId) {
+  var originalId = SS_ID;
+  SS_ID = ssId || originalId;
+  var result = getSheetData();
+  SS_ID = originalId;
+  return result;
+}
+
+function getHeatMapDataForCity(ssId) {
+  var originalId = SS_ID;
+  SS_ID = ssId || originalId;
+  var result = getHeatMapData();
+  SS_ID = originalId;
+  return result;
+}
+// ──────────────────────────────────────────────────────────────
 
 function saveReport(text) {
   try {
